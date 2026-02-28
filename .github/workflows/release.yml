@@ -43,9 +43,14 @@ jobs:
     - name: Rename artifact
       run: cp target/${{ matrix.target }}/release/axe ${{ matrix.artifact_name }}
       
+    - name: Calculate checksum
+      run: sha256sum ${{ matrix.artifact_name }} > ${{ matrix.artifact_name }}.sha256
+
     - name: Upload binaries to release
       uses: softprops/action-gh-release@v2
       with:
-        files: ${{ matrix.artifact_name }}
+        files: |
+          ${{ matrix.artifact_name }}
+          ${{ matrix.artifact_name }}.sha256
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
