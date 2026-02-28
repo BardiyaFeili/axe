@@ -14,8 +14,8 @@ conflicts=("$_pkgname")
 source_x86_64=("$url/releases/download/v$pkgver/axe-x86_64")
 source_aarch64=("$url/releases/download/v$pkgver/axe-aarch64")
 
-sha256sums_x86_64=('SKIP') # Replace with actual sums upon release
-sha256sums_aarch64=('SKIP')
+sha256sums_x86_64=('REPLACE_ME_X86_64')
+sha256sums_aarch64=('REPLACE_ME_AARCH64')
 
 package() {
   local _arch="$CARCH"

@@ -2,6 +2,8 @@
 name = "axe"
 version = "0.1.0"
 edition = "2024"
+authors = ["afkarxyz"]
+license = "MIT"
 description = "A simple CLI package manager for AppImages"
 repository = "https://github.com/BardiyaFeili/axe"
 keywords = ["appimage", "package-manager", "cli", "linux"]
