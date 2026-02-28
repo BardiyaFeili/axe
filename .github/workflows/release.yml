@@ -45,51 +45,13 @@ jobs:
       
     - name: Calculate checksum
       run: |
-        sha256sum ${{ matrix.artifact_name }} | cut -d' ' -f1 > ${{ matrix.artifact_name }}.sha256
-
-    - name: Upload artifact for next job
-      uses: actions/upload-artifact@v4
-      with:
-        name: checksum-${{ matrix.artifact_name }}
-        path: ${{ matrix.artifact_name }}.sha256
+        sha256sum ${{ matrix.artifact_name }} | cut -d' ' -f1 > ${{ matrix.artifact_name     }}.sha256
 
     - name: Upload binaries to release
       uses: softprops/action-gh-release@v2
       with:
         files: |
           ${{ matrix.artifact_name }}
+          ${{ matrix.artifact_name }}.sha256
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  update-pkgbuild:
-    name: Update PKGBUILD
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        ref: master
-
-    - name: Download all checksums
-      uses: actions/download-artifact@v4
-      with:
-        path: checksums
-
-    - name: Update PKGBUILD-bin
-      run: |
-        VERSION=${GITHUB_REF#refs/tags/v}
-        SUM_X86=$(cat checksums/checksum-axe-x86_64/axe-x86_64.sha256)
-        SUM_ARM=$(cat checksums/checksum-axe-aarch64/axe-aarch64.sha256)
-        
-        # Use simpler sed commands to avoid issues
-        sed -i "s/pkgver=.*/pkgver=$VERSION/" packaging/arch/PKGBUILD-bin
-        sed -i "s/sha256sums_x86_64=.*/sha256sums_x86_64=('$SUM_X86')/" packaging/arch/PKGBUILD-bin
-        sed -i "s/sha256sums_aarch64=.*/sha256sums_aarch64=('$SUM_ARM')/" packaging/arch/PKGBUILD-bin
-        
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add packaging/arch/PKGBUILD-bin
-        git commit -m "chore: update PKGBUILD-bin to v$VERSION" || echo "No changes to commit"
-        git push origin master
