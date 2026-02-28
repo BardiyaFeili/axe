@@ -49,38 +49,45 @@ pub async fn handle_add(add_args: AddArgs, paths: &AxePaths, config: &Config) {
         }
     };
 
-    // Check if already installed
-    let lockfile = paths.load_lockfile().unwrap_or_default();
-    if let Some(existing) = lockfile.packages.get(&name) {
-        if existing.version == meta_version && existing.path.exists() {
-            println!("{} version {} is already installed at {:?}", name, meta_version, existing.path);
-            return;
-        }
-    }
-
     let file_name = url.split('/').last().unwrap_or(&name);
     let dest = paths.bin_dir.join(file_name);
 
-    println!("Downloading {}...", name);
-    match download::download_file(&url, dest.clone(), &name).await {
-        Ok(hash) => {
-            let mut lockfile = paths.load_lockfile().unwrap_or_default();
-            lockfile.packages.insert(name.clone(), PackageEntry {
-                name: name.clone(),
-                version: meta_version,
-                url,
-                hash,
-                path: dest,
-                source,
-            });
-            paths.save_lockfile(&lockfile).expect("Failed to save lockfile");
-            println!("Successfully installed {}!", name);
+    let hash = if dest.exists() {
+        let lockfile = paths.load_lockfile().unwrap_or_default();
+        if let Some(existing) = lockfile.packages.get(&name) {
+            if existing.version == meta_version {
+                println!("{} version {} is already in bin at {:?}", name, meta_version, dest);
+                return;
+            }
         }
-        Err(e) => {
-            eprintln!("Download error: {}", e);
-            std::process::exit(1);
+        
+        println!("Binary already exists at {:?}. Calculating hash...", dest);
+        match download::calculate_hash(&dest) {
+            Ok(h) => {
+                download::set_executable(&dest).expect("Failed to set executable permissions");
+                h
+            }
+            Err(e) => {
+                eprintln!("Failed to calculate hash: {}. Re-downloading...", e);
+                download::download_file(&url, dest.clone(), &name).await.expect("Failed to download")
+            }
         }
-    }
+    } else {
+        println!("Downloading {}...", name);
+        download::download_file(&url, dest.clone(), &name).await.expect("Failed to download")
+    };
+
+    let mut lockfile = paths.load_lockfile().unwrap_or_default();
+    lockfile.packages.insert(name.clone(), PackageEntry {
+        name: name.clone(),
+        version: meta_version,
+        url,
+        hash,
+        path: dest,
+        source,
+    });
+    paths.save_lockfile(&lockfile).expect("Failed to save lockfile");
+    println!("Successfully installed {}!", name);
 }
 
 pub fn handle_list(paths: &AxePaths) {

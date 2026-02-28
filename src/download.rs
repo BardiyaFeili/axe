@@ -1,6 +1,6 @@
 use sha2::{Digest, Sha256};
 use std::fs;
-use std::io::Write;
+use std::io::{Write, Read};
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -41,10 +41,27 @@ pub async fn download_file(url: &str, dest: PathBuf, name: &str) -> Result<Strin
     pb.finish_with_message(format!("{} downloaded", name));
 
     // chmod +x
-    let mut perms = fs::metadata(&dest).map_err(|e| e.to_string())?.permissions();
-    perms.set_mode(0o755);
-    fs::set_permissions(&dest, perms).map_err(|e| e.to_string())?;
+    set_executable(&dest)?;
 
     let hash = format!("{:x}", hasher.finalize());
     Ok(hash)
+}
+
+pub fn calculate_hash(path: &PathBuf) -> Result<String, String> {
+    let mut file = fs::File::open(path).map_err(|e| e.to_string())?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0; 1024];
+    loop {
+        let count = file.read(&mut buffer).map_err(|e| e.to_string())?;
+        if count == 0 { break; }
+        hasher.update(&buffer[..count]);
+    }
+    Ok(format!("{:x}", hasher.finalize()))
+}
+
+pub fn set_executable(path: &PathBuf) -> Result<(), String> {
+    let mut perms = fs::metadata(path).map_err(|e| e.to_string())?.permissions();
+    perms.set_mode(0o755);
+    fs::set_permissions(path, perms).map_err(|e| e.to_string())?;
+    Ok(())
 }

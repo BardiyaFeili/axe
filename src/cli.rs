@@ -75,12 +75,13 @@ impl FromStr for Source {
                     .trim_start_matches("http://github.com/");
                 
                 let parts: Vec<&str> = clean_input.split('/').collect();
-                if parts.len() == 2 {
+                if parts.len() >= 2 {
                     return Ok(Source::Github {
                         owner: parts[0].to_string(),
                         repo: parts[1].to_string(),
                     });
                 }
+                return Err("Invalid GitHub URL. Must contain at least owner and repo.".into());
             }
             return Ok(Source::Url(input.to_string()));
         }
