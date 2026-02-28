@@ -9,6 +9,8 @@ jobs:
   build:
     name: Build for ${{ matrix.target }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     strategy:
       matrix:
         include:
@@ -44,7 +46,6 @@ jobs:
     - name: Calculate checksum
       run: |
         sha256sum ${{ matrix.artifact_name }} | cut -d' ' -f1 > ${{ matrix.artifact_name }}.sha256
-        echo "CHECKSUM=$(cat ${{ matrix.artifact_name }}.sha256)" >> $GITHUB_ENV
 
     - name: Upload artifact for next job
       uses: actions/upload-artifact@v4
@@ -82,9 +83,10 @@ jobs:
         SUM_X86=$(cat checksums/checksum-axe-x86_64/axe-x86_64.sha256)
         SUM_ARM=$(cat checksums/checksum-axe-aarch64/axe-aarch64.sha256)
         
+        # Use simpler sed commands to avoid issues
         sed -i "s/pkgver=.*/pkgver=$VERSION/" packaging/arch/PKGBUILD-bin
-        sed -i "s/REPLACE_ME_X86_64/$SUM_X86/" packaging/arch/PKGBUILD-bin
-        sed -i "s/REPLACE_ME_AARCH64/$SUM_ARM/" packaging/arch/PKGBUILD-bin
+        sed -i "s/sha256sums_x86_64=.*/sha256sums_x86_64=('$SUM_X86')/" packaging/arch/PKGBUILD-bin
+        sed -i "s/sha256sums_aarch64=.*/sha256sums_aarch64=('$SUM_ARM')/" packaging/arch/PKGBUILD-bin
         
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"

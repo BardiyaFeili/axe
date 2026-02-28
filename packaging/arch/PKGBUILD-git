@@ -1,4 +1,4 @@
-# Maintainer: Bardia <bardia@example.com>
+# Maintainer: Bardiya Feili <bardiyafeili@proton.me>
 pkgname=axe-git
 _pkgname=axe
 pkgver=r0.g1234567 # This will be updated by pkgver()
