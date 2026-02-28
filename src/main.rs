@@ -1,22 +1,26 @@
-use crate::cli::{AddArgs, AddSource, Commands, GithubArgs, parse_args};
+use crate::cli::{Commands, parse_args};
+use crate::config::AxePaths;
 
 mod cli;
+mod config;
+mod github;
+mod download;
+mod commands;
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    let paths = AxePaths::new().expect("Failed to initialize paths");
+    paths.ensure_dirs().expect("Failed to create necessary directories");
+    
+    // Load or create config (with architecture detection)
+    let config = paths.load_config().expect("Failed to load or create config");
+
     let cli = parse_args();
 
     match cli.command {
-        Commands::Add(a) => handle_add(a),
+        Commands::Add(a) => commands::handle_add(a, &paths, &config).await,
+        Commands::List => commands::handle_list(&paths),
+        Commands::Install => commands::handle_install(&paths).await,
+        Commands::Run(a) => commands::handle_run(a, &paths).await,
     }
-}
-
-pub fn handle_add(add_args: AddArgs) {
-    match add_args.source {
-        AddSource::Github(a) => handle_github(a),
-    }
-}
-
-pub fn handle_github(args: GithubArgs) {
-    let _source = format!("{}/{}", args.repo.owner, args.repo.repo);
-    println!("TODO");
 }
