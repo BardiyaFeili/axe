@@ -18,10 +18,10 @@ axe add https://example.com/MyApp.AppImage
 
 ### Run an app
 
-Axe does have support for .desktop files, but you also run them like this
+Axe does have support for .desktop files, but you can also run them like this
 
 ```bash
-axe run app_name
+axe run app_name # app_name is not case-sensitive
 ```
 
 ### Update all packages
@@ -41,8 +41,12 @@ axe install                       # Restore apps from lockfile
 
 ## Config
 
-Located at `~/.config/axe/axe.toml`
+> [!TIP]
+> axe keeps the lockfile at `~/.config/axe/axe.lock`
+> This allows you to easily save in your dotfiles repo
+
+The config file is located at `~/.config/axe/axe.toml`
 
 ```toml
-arch = "x86_64"
+arch = "x86_64" #auto-generated on first launch
 ```
