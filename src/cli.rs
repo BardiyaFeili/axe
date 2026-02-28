@@ -24,6 +24,41 @@ pub enum Commands {
 
     /// Run an installed AppImage by name
     Run(RunArgs),
+
+    /// Rename a package in the lockfile
+    Rename(RenameArgs),
+
+    /// Check for updates for all packages and install them
+    Update(UpdateArgs),
+
+    /// Remove a package and its desktop entry
+    Remove(RemoveArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct RemoveArgs {
+    /// Name of the package to remove
+    pub name: String,
+
+    /// Auto-agree to all prompts
+    #[arg(short, long)]
+    pub yes: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct UpdateArgs {
+    /// Auto-agree to all prompts
+    #[arg(short, long)]
+    pub yes: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct RenameArgs {
+    /// Current name of the package
+    pub old_name: String,
+    
+    /// New name for the package
+    pub new_name: String,
 }
 
 #[derive(Args, Debug)]
@@ -55,6 +90,10 @@ pub struct AddArgs {
     /// Auto-agree to all prompts
     #[arg(short, long)]
     pub yes: bool,
+
+    /// Create a desktop entry for the package
+    #[arg(short, long)]
+    pub desktop: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -76,10 +115,11 @@ impl FromStr for Source {
                 
                 let parts: Vec<&str> = clean_input.split('/').collect();
                 if parts.len() >= 2 {
-                    return Ok(Source::Github {
-                        owner: parts[0].to_string(),
-                        repo: parts[1].to_string(),
-                    });
+                    let owner = parts[0].to_string();
+                    let repo = parts[1].to_string();
+                    if !owner.is_empty() && !repo.is_empty() {
+                        return Ok(Source::Github { owner, repo });
+                    }
                 }
                 return Err("Invalid GitHub URL. Must contain at least owner and repo.".into());
             }

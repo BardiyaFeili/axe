@@ -50,9 +50,9 @@ pub async fn find_github_asset(
 
     // Common arch names for x86_64
     let arch_aliases = if preferred_arch == "x86_64" {
-        vec!["x86_64", "amd64", "x64"]
+        vec!["x86_64", "amd64", "x64", "64bit"]
     } else if preferred_arch == "aarch64" {
-        vec!["aarch64", "arm64"]
+        vec!["aarch64", "arm64", "armv8", "armv8l"]
     } else {
         vec![preferred_arch]
     };
@@ -70,7 +70,7 @@ pub async fn find_github_asset(
             continue;
         }
 
-        // 1. Try to find the exact architecture match
+        // Try to find the exact architecture match in the AppImage asset names.
         for arch in &arch_aliases {
             if let Some(asset) = appimage_assets.iter().find(|a| a.name.to_lowercase().contains(arch)) {
                 return Ok(RepoMetadata {
@@ -80,9 +80,15 @@ pub async fn find_github_asset(
             }
         }
 
-        // 2. Fallback: if there's only one appimage asset, maybe it's the one (or we just take the first one found)
-        // But the user complained about aarch64, so better to be strict or at least warn.
-        // For now, let's take the first one if we can't find a match, but we already have a better way now.
+        // Fallback: If only one AppImage exists and we are on x86_64, 
+        // assume it's the one (many devs only build for x86_64 and don't label it).
+        if preferred_arch == "x86_64" && appimage_assets.len() == 1 {
+            let asset = appimage_assets[0];
+            return Ok(RepoMetadata {
+                asset: (*asset).clone(),
+                version: release.tag_name,
+            });
+        }
     }
 
     Err(format!(

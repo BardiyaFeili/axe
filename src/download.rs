@@ -23,6 +23,9 @@ pub async fn download_file(url: &str, dest: PathBuf, name: &str) -> Result<Strin
         .progress_chars("#>-"));
     pb.set_message(name.to_string());
 
+    if let Some(parent) = dest.parent() {
+        fs::create_dir_all(parent).map_err(|e| format!("Failed to create directories: {}", e))?;
+    }
     let mut file = fs::File::create(&dest).map_err(|e| format!("Failed to create file: {}", e))?;
     let mut downloaded: u64 = 0;
     let mut stream = response.bytes_stream();

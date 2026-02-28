@@ -9,6 +9,7 @@ pub struct AxePaths {
     pub config_dir: PathBuf,
     pub data_dir: PathBuf,
     pub bin_dir: PathBuf,
+    pub applications_dir: PathBuf,
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -34,6 +35,7 @@ pub struct PackageEntry {
     pub url: String,
     pub hash: String,
     pub path: PathBuf,
+    pub desktop_file: Option<PathBuf>,
     #[serde(flatten)]
     pub source: Source,
 }
@@ -68,11 +70,15 @@ impl AxePaths {
         let config_dir = proj_dirs.config_dir().to_path_buf();
         let data_dir = proj_dirs.data_dir().to_path_buf();
         let bin_dir = data_dir.join("bin");
+        let applications_dir = proj_dirs.data_local_dir().parent()
+            .unwrap_or(proj_dirs.data_local_dir())
+            .join("applications");
 
         Ok(Self {
             config_dir,
             data_dir,
             bin_dir,
+            applications_dir,
         })
     }
 
@@ -83,6 +89,8 @@ impl AxePaths {
             .map_err(|e| format!("Failed to create data dir: {}", e))?;
         fs::create_dir_all(&self.bin_dir)
             .map_err(|e| format!("Failed to create bin dir: {}", e))?;
+        fs::create_dir_all(&self.applications_dir)
+            .map_err(|e| format!("Failed to create applications dir: {}", e))?;
         Ok(())
     }
 
@@ -116,8 +124,19 @@ impl AxePaths {
             self.save_config(&config)?;
             return Ok(config);
         }
+        
         let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-        toml::from_str(&content).map_err(|e| e.to_string())
+        match toml::from_str::<Config>(&content) {
+            Ok(config) => Ok(config),
+            Err(_) => {
+                // If it exists but is invalid (e.g. missing arch), 
+                // we merge with default or overwrite with default for safety.
+                // For now, let's just use default and re-save if it was broken.
+                let config = Config::default();
+                self.save_config(&config)?;
+                Ok(config)
+            }
+        }
     }
 
     pub fn save_config(&self, config: &Config) -> Result<(), String> {
