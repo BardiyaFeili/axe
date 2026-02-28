@@ -2,9 +2,6 @@
 
 A simple CLI package manager for AppImages, written in Rust.
 
-> [!WARNING]
-> axe is currently in early development.
-
 ## Usage
 
 ### Add an application
