@@ -119,70 +119,70 @@ pub async fn handle_add(add_args: AddArgs, paths: &AxePaths, config: &Config) {
             }
         }
     } else {
-                println!("Downloading {}...", name);
-                download::download_file(&url, dest.clone(), &name)
-                    .await
-                    .expect("Failed to download")
-            };
-        
-            let should_create_desktop = if add_args.yes || add_args.desktop {
-                true
-            } else {
-                print!("Create a desktop entry for {}? [Y/n]: ", name);
-                io::stdout().flush().unwrap();
-                let mut response = String::new();
-                io::stdin().read_line(&mut response).unwrap();
-                let response = response.trim().to_lowercase();
-                response.is_empty() || response == "y" || response == "yes"
-            };
-        
-            let desktop_file = if should_create_desktop {
-                match create_desktop_file(&name, &dest, paths) {
-                    Ok(p) => Some(p),
-                    Err(e) => {
-                        eprintln!("Warning: Failed to create desktop file: {}", e);
-                        None
-                    }
-                }
-            } else {
+        println!("Downloading {}...", name);
+        download::download_file(&url, dest.clone(), &name)
+            .await
+            .expect("Failed to download")
+    };
+
+    let should_create_desktop = if add_args.yes || add_args.desktop {
+        true
+    } else {
+        print!("Create a desktop entry for {}? [Y/n]: ", name);
+        io::stdout().flush().unwrap();
+        let mut response = String::new();
+        io::stdin().read_line(&mut response).unwrap();
+        let response = response.trim().to_lowercase();
+        response.is_empty() || response == "y" || response == "yes"
+    };
+
+    let desktop_file = if should_create_desktop {
+        match create_desktop_file(&name, &dest, paths) {
+            Ok(p) => Some(p),
+            Err(e) => {
+                eprintln!("Warning: Failed to create desktop file: {}", e);
                 None
-            };
-        
-            lockfile.packages.insert(
-                name.clone(),
-                PackageEntry {
-                    name: name.clone(),
-                    version: meta_version,
-                    url,
-                    hash,
-                    path: dest,
-                    desktop_file,
-                    source,
-                },
-            );
-            paths
-                .save_lockfile(&lockfile)
-                .expect("Failed to save lockfile");
-            println!("Successfully installed {}!", name);
+            }
         }
-        
-        fn create_desktop_file(
-            name: &str,
-            exec_path: &std::path::Path,
-            paths: &AxePaths,
-        ) -> Result<std::path::PathBuf, String> {
-            let desktop_path = paths.applications_dir.join(format!("{}.desktop", name));
-        
-            let content = format!(
-                "[Desktop Entry]\nType=Application\nName={}\nExec={}\nIcon=utilities-terminal\nTerminal=false\nCategories=Utility;\n",
-                name,
-                exec_path.to_string_lossy(),
-            );
-        
-            fs::write(&desktop_path, content).map_err(|e| format!("Failed to write desktop file: {}", e))?;
-            Ok(desktop_path)
-        }
-        
+    } else {
+        None
+    };
+
+    lockfile.packages.insert(
+        name.clone(),
+        PackageEntry {
+            name: name.clone(),
+            version: meta_version,
+            url,
+            hash,
+            path: dest,
+            desktop_file,
+            source,
+        },
+    );
+    paths
+        .save_lockfile(&lockfile)
+        .expect("Failed to save lockfile");
+    println!("Successfully installed {}!", name);
+}
+
+fn create_desktop_file(
+    name: &str,
+    exec_path: &std::path::Path,
+    paths: &AxePaths,
+) -> Result<std::path::PathBuf, String> {
+    let desktop_path = paths.applications_dir.join(format!("{}.desktop", name));
+
+    let content = format!(
+        "[Desktop Entry]\nType=Application\nName={}\nExec={}\nIcon=utilities-terminal\nTerminal=false\nCategories=Utility;\n",
+        name,
+        exec_path.to_string_lossy(),
+    );
+
+    fs::write(&desktop_path, content)
+        .map_err(|e| format!("Failed to write desktop file: {}", e))?;
+    Ok(desktop_path)
+}
 
 pub fn handle_list(paths: &AxePaths) {
     let lockfile = paths.load_lockfile().unwrap_or_default();

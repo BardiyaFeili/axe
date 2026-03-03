@@ -14,7 +14,6 @@ async fn main() {
         .ensure_dirs()
         .expect("Failed to create necessary directories");
 
-    // Load or create config (with architecture detection)
     let config = paths
         .load_config()
         .expect("Failed to load or create config");

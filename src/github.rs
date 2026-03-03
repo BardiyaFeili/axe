@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use reqwest::header::USER_AGENT;
+use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 struct GithubRelease {
@@ -48,7 +48,6 @@ pub async fn find_github_asset(
         return Err(format!("No releases found for {}/{}", owner, repo));
     }
 
-    // Common arch names for x86_64
     let arch_aliases = if preferred_arch == "x86_64" {
         vec!["x86_64", "amd64", "x64", "64bit"]
     } else if preferred_arch == "aarch64" {
@@ -62,7 +61,9 @@ pub async fn find_github_asset(
             continue;
         }
 
-        let appimage_assets: Vec<&GithubAsset> = release.assets.iter()
+        let appimage_assets: Vec<&GithubAsset> = release
+            .assets
+            .iter()
             .filter(|a| a.name.to_lowercase().ends_with(".appimage"))
             .collect();
 
@@ -70,9 +71,11 @@ pub async fn find_github_asset(
             continue;
         }
 
-        // Try to find the exact architecture match in the AppImage asset names.
         for arch in &arch_aliases {
-            if let Some(asset) = appimage_assets.iter().find(|a| a.name.to_lowercase().contains(arch)) {
+            if let Some(asset) = appimage_assets
+                .iter()
+                .find(|a| a.name.to_lowercase().contains(arch))
+            {
                 return Ok(RepoMetadata {
                     asset: (*asset).clone(),
                     version: release.tag_name,
@@ -80,8 +83,6 @@ pub async fn find_github_asset(
             }
         }
 
-        // Fallback: If only one AppImage exists and we are on x86_64, 
-        // assume it's the one (many devs only build for x86_64 and don't label it).
         if preferred_arch == "x86_64" && appimage_assets.len() == 1 {
             let asset = appimage_assets[0];
             return Ok(RepoMetadata {

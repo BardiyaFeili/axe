@@ -47,3 +47,19 @@ The config file is located at `~/.config/axe/axe.toml`
 ```toml
 arch = "x86_64" #auto-generated on first launch
 ```
+
+## Building from source
+
+First clone the repo and cd into it and then build using cargo
+
+```bash
+git clone https://github.com/BardiyaFeili/axe.git && cd axe
+
+cargo build --release
+```
+
+Then move the binary to a directory that is in your path.
+
+```bash
+mv ./target/release/axe ~/.local/bin
+```

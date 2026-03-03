@@ -53,7 +53,8 @@ impl Default for Config {
             Architecture::X86_64 => "x86_64",
             Architecture::Aarch64(_) => "aarch64",
             _ => "x86_64",
-        }.to_string();
+        }
+        .to_string();
 
         Self {
             arch,
@@ -64,13 +65,15 @@ impl Default for Config {
 
 impl AxePaths {
     pub fn new() -> Result<Self, String> {
-        let proj_dirs = ProjectDirs::from("", "", "axe")
-            .ok_or("Could not determine project directories")?;
+        let proj_dirs =
+            ProjectDirs::from("", "", "axe").ok_or("Could not determine project directories")?;
 
         let config_dir = proj_dirs.config_dir().to_path_buf();
         let data_dir = proj_dirs.data_dir().to_path_buf();
         let bin_dir = data_dir.join("bin");
-        let applications_dir = proj_dirs.data_local_dir().parent()
+        let applications_dir = proj_dirs
+            .data_local_dir()
+            .parent()
             .unwrap_or(proj_dirs.data_local_dir())
             .join("applications");
 
@@ -124,14 +127,11 @@ impl AxePaths {
             self.save_config(&config)?;
             return Ok(config);
         }
-        
+
         let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
         match toml::from_str::<Config>(&content) {
             Ok(config) => Ok(config),
             Err(_) => {
-                // If it exists but is invalid (e.g. missing arch), 
-                // we merge with default or overwrite with default for safety.
-                // For now, let's just use default and re-save if it was broken.
                 let config = Config::default();
                 self.save_config(&config)?;
                 Ok(config)
