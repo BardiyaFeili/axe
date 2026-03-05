@@ -52,7 +52,6 @@ pub async fn handle_add(add_args: AddArgs, paths: &AxePaths, config: &Config) {
 
     let mut lockfile = paths.load_lockfile().unwrap_or_default();
 
-    // Check if the source is already tracked under ANY name
     let existing_name = lockfile
         .packages
         .values()
