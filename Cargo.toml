@@ -2,7 +2,7 @@
 name = "axe"
 version = "0.1.1"
 edition = "2024"
-authors = ["Bardiya Feili <bardiyafeili@proton.me>"]
+authors = ["Bardiya Feili"]
 license = "MIT"
 description = "A simple CLI package manager for AppImages"
 repository = "https://github.com/BardiyaFeili/axe"
