@@ -1,9 +1,6 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs;
-use std::path::PathBuf;
-use target_lexicon::{Architecture, Triple};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 pub struct AxePaths {
     pub config_dir: PathBuf,
@@ -38,29 +35,6 @@ pub struct PackageEntry {
     pub desktop_file: Option<PathBuf>,
     #[serde(flatten)]
     pub source: Source,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Config {
-    pub arch: String,
-    pub github_api_key: Option<String>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        let triple = Triple::host();
-        let arch = match triple.architecture {
-            Architecture::X86_64 => "x86_64",
-            Architecture::Aarch64(_) => "aarch64",
-            _ => "x86_64",
-        }
-        .to_string();
-
-        Self {
-            arch,
-            github_api_key: None,
-        }
-    }
 }
 
 impl AxePaths {
@@ -101,10 +75,6 @@ impl AxePaths {
         self.config_dir.join("axe.lock")
     }
 
-    pub fn config_path(&self) -> PathBuf {
-        self.config_dir.join("axe.toml")
-    }
-
     pub fn load_lockfile(&self) -> Result<Lockfile, String> {
         let path = self.lockfile_path();
         if !path.exists() {
@@ -117,31 +87,6 @@ impl AxePaths {
     pub fn save_lockfile(&self, lockfile: &Lockfile) -> Result<(), String> {
         let path = self.lockfile_path();
         let content = toml::to_string_pretty(lockfile).map_err(|e| e.to_string())?;
-        fs::write(path, content).map_err(|e| e.to_string())
-    }
-
-    pub fn load_config(&self) -> Result<Config, String> {
-        let path = self.config_path();
-        if !path.exists() {
-            let config = Config::default();
-            self.save_config(&config)?;
-            return Ok(config);
-        }
-
-        let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-        match toml::from_str::<Config>(&content) {
-            Ok(config) => Ok(config),
-            Err(_) => {
-                let config = Config::default();
-                self.save_config(&config)?;
-                Ok(config)
-            }
-        }
-    }
-
-    pub fn save_config(&self, config: &Config) -> Result<(), String> {
-        let path = self.config_path();
-        let content = toml::to_string_pretty(config).map_err(|e| e.to_string())?;
         fs::write(path, content).map_err(|e| e.to_string())
     }
 }

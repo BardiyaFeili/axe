@@ -1,12 +1,23 @@
-use crate::cli::{AddArgs, RemoveArgs, RenameArgs, RunArgs, Source as CliSource, UpdateArgs};
-use crate::config::{AxePaths, Config, PackageEntry, Source};
-use crate::download;
-use crate::github;
-use std::fs;
-use std::io::{self, Write};
-use std::process::Command;
+use crate::{
+    cli::{AddArgs, RemoveArgs, RenameArgs, RunArgs, Source as CliSource, UpdateArgs},
+    config::{AxePaths, PackageEntry, Source},
+    download, github,
+};
+use std::{
+    fs,
+    io::{self, Write},
+    process::Command,
+};
+use target_lexicon::{Architecture, Triple};
 
-pub async fn handle_add(add_args: AddArgs, paths: &AxePaths, config: &Config) {
+pub async fn handle_add(add_args: AddArgs, paths: &AxePaths) {
+    let triple = Triple::host();
+    let arch = match triple.architecture {
+        Architecture::X86_64 => "x86_64",
+        Architecture::Aarch64(_) => "aarch64",
+        _ => "x86_64",
+    }
+    .to_string();
     let (suggested_name, meta_version, url, source) = match add_args.source {
         CliSource::Github {
             ref owner,
@@ -14,9 +25,9 @@ pub async fn handle_add(add_args: AddArgs, paths: &AxePaths, config: &Config) {
         } => {
             println!(
                 "Checking repository {}/{} for architecture '{}'...",
-                owner, repo, config.arch
+                owner, repo, arch
             );
-            match github::find_github_asset(owner, repo, add_args.prerelease, &config.arch).await {
+            match github::find_github_asset(owner, repo, add_args.prerelease, &arch).await {
                 Ok(meta) => (
                     repo.clone(),
                     meta.version,
@@ -345,7 +356,13 @@ pub fn handle_rename(args: RenameArgs, paths: &AxePaths) {
     );
 }
 
-pub async fn handle_update(args: UpdateArgs, paths: &AxePaths, config: &Config) {
+pub async fn handle_update(args: UpdateArgs, paths: &AxePaths) {
+    let triple = Triple::host();
+    let arch = match triple.architecture {
+        Architecture::X86_64 => "x86_64",
+        Architecture::Aarch64(_) => "aarch64",
+        _ => "x86_64",
+    };
     let mut lockfile = paths.load_lockfile().expect("Failed to load lockfile");
     let mut updated_packages = Vec::new();
 
@@ -362,7 +379,7 @@ pub async fn handle_update(args: UpdateArgs, paths: &AxePaths, config: &Config) 
                 prerelease,
             } => {
                 println!("Checking update for {} ({}/{})...", name, owner, repo);
-                match github::find_github_asset(owner, repo, *prerelease, &config.arch).await {
+                match github::find_github_asset(owner, repo, *prerelease, arch).await {
                     Ok(meta) => {
                         if meta.version != pkg.version {
                             println!(

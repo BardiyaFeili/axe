@@ -1,11 +1,13 @@
-use sha2::{Digest, Sha256};
-use std::fs;
-use std::io::{Write, Read};
-use std::os::unix::fs::PermissionsExt;
-use std::path::PathBuf;
-use indicatif::{ProgressBar, ProgressStyle};
-use futures_util::StreamExt;
 use bytes::Bytes;
+use futures_util::StreamExt;
+use indicatif::{ProgressBar, ProgressStyle};
+use sha2::{Digest, Sha256};
+use std::{
+    fs,
+    io::{Read, Write},
+    os::unix::fs::PermissionsExt,
+    path::PathBuf,
+};
 
 pub async fn download_file(url: &str, dest: PathBuf, name: &str) -> Result<String, String> {
     let response = reqwest::get(url)
@@ -33,9 +35,10 @@ pub async fn download_file(url: &str, dest: PathBuf, name: &str) -> Result<Strin
 
     while let Some(item) = stream.next().await {
         let chunk: Bytes = item.map_err(|e| format!("Error while downloading: {}", e))?;
-        file.write_all(&chunk).map_err(|e| format!("Failed to write: {}", e))?;
+        file.write_all(&chunk)
+            .map_err(|e| format!("Failed to write: {}", e))?;
         hasher.update(&chunk);
-        
+
         let new = downloaded + (chunk.len() as u64);
         downloaded = new;
         pb.set_position(new);
@@ -56,7 +59,9 @@ pub fn calculate_hash(path: &PathBuf) -> Result<String, String> {
     let mut buffer = [0; 1024];
     loop {
         let count = file.read(&mut buffer).map_err(|e| e.to_string())?;
-        if count == 0 { break; }
+        if count == 0 {
+            break;
+        }
         hasher.update(&buffer[..count]);
     }
     Ok(format!("{:x}", hasher.finalize()))

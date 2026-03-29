@@ -15,10 +15,10 @@ pub struct Cli {
 pub enum Commands {
     /// Add a package
     Add(AddArgs),
-    
+
     /// List all packages in the lockfile
     List,
-    
+
     /// Install all packages defined in the lockfile
     Install,
 
@@ -56,7 +56,7 @@ pub struct UpdateArgs {
 pub struct RenameArgs {
     /// Current name of the package
     pub old_name: String,
-    
+
     /// New name for the package
     pub new_name: String,
 }
@@ -65,7 +65,7 @@ pub struct RenameArgs {
 pub struct RunArgs {
     /// Name of the package to run
     pub name: String,
-    
+
     /// Arguments to pass to the AppImage
     pub args: Vec<String>,
 
@@ -112,7 +112,7 @@ impl FromStr for Source {
                     .trim_end_matches('/')
                     .trim_start_matches("https://github.com/")
                     .trim_start_matches("http://github.com/");
-                
+
                 let parts: Vec<&str> = clean_input.split('/').collect();
                 if parts.len() >= 2 {
                     let owner = parts[0].to_string();

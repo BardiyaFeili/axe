@@ -14,19 +14,15 @@ async fn main() {
         .ensure_dirs()
         .expect("Failed to create necessary directories");
 
-    let config = paths
-        .load_config()
-        .expect("Failed to load or create config");
-
     let cli = parse_args();
 
     match cli.command {
-        Commands::Add(a) => commands::handle_add(a, &paths, &config).await,
+        Commands::Add(a) => commands::handle_add(a, &paths).await,
         Commands::List => commands::handle_list(&paths),
         Commands::Install => commands::handle_install(&paths).await,
         Commands::Run(a) => commands::handle_run(a, &paths).await,
         Commands::Rename(a) => commands::handle_rename(a, &paths),
-        Commands::Update(a) => commands::handle_update(a, &paths, &config).await,
+        Commands::Update(a) => commands::handle_update(a, &paths).await,
         Commands::Remove(a) => commands::handle_remove(a, &paths),
     }
 }
