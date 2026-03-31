@@ -49,7 +49,7 @@ pub async fn download_file(url: &str, dest: PathBuf, name: &str) -> Result<Strin
     // chmod +x
     set_executable(&dest)?;
 
-    let hash = format!("{:x}", hasher.finalize());
+    let hash = hex::encode(hasher.finalize());
     Ok(hash)
 }
 
@@ -64,7 +64,7 @@ pub fn calculate_hash(path: &PathBuf) -> Result<String, String> {
         }
         hasher.update(&buffer[..count]);
     }
-    Ok(format!("{:x}", hasher.finalize()))
+    Ok(hex::encode(hasher.finalize()))
 }
 
 pub fn set_executable(path: &PathBuf) -> Result<(), String> {
